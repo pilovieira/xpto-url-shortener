@@ -1,0 +1,27 @@
+{
+  "name": "xablau",
+  "version": "1.0.0",
+  "description": "xablau url shortener",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pilovieira/xablau-url-short.git"
+  },
+  "author": "pilo-vieira",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pilovieira/xablau-url-short/issues"
+  },
+  "homepage": "https://github.com/pilovieira/xablau-url-short#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "http-server": "^0.12.3"
+  },
+  "engines": {
+    "node": "12.x"
+  }
+}

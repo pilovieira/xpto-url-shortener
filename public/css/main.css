@@ -1,0 +1,74 @@
+body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+
+#message { background: white; max-width: 500px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
+
+#message h1 { font-size: 28px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+
+.center {
+  text-align: center;
+}
+
+a.showShort {
+  width: 100%;
+  font-size: 28px;
+  font-weight: 200;
+  color: rgba(0,0,0,0.6);
+  text-align: center;
+  margin: 20px 0px;
+  display: block;
+}
+
+input[type=text], select {
+  width: 100%;
+  padding: 12px 20px;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.link {
+  width: 100%;
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 8px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+#message h2 { font-size: 24px; font-weight: 300; color: rgba(0,0,0,0.8); margin: 0 0 16px;}
+
+#message h1.spacer { margin: 0 0 32px;}
+
+span.textValues { font-weight: bold; color: #3f50b4; }
+
+#message p { margin: 0 0 24px; font-size: 14px; font-weight: bold; color: rgba(0,0,0,0.6);}
+
+#userInfo, #errorLog { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
+
+@media (max-width: 600px) {
+  body, #message { margin-top: 0; background: white; box-shadow: none; }
+  body { border-top: 16px solid #3c77e8; }
+}
+
+form > div { padding: 7px; }
+label { padding-right: 5px; text-decoration: underline; font-size: 0.9em; }
+.empty { text-color: #FF0000; }
+#logo img { width: 50%; height: 50%; vertical-align: middle; }
+
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
