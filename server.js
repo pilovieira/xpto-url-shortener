@@ -6,9 +6,11 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
 app.use('/public', express.static(path.join(__dirname, 'public')));
-app.listen(5000, () => console.log(`listening on port 5000!`));
+
+const port = process.env.PORT || 5000;
+
+app.listen(port, () => console.log(`listening on port ${port}!`));
 
 app.post('/create', (req, res) => {
   try {
@@ -61,6 +63,7 @@ function createIndex(res) {
     '    <meta charset="utf-8">' +
     '    <meta name="viewport" content="width=device-width, initial-scale=1">' +
     '    <title>Xablau Url Shortener</title>' +
+    '    <link rel="icon" type="image/png" href="./public/image/favicon.png"/>' +
     '    <link rel="stylesheet" href="./public/css/main.css" />' +
     '  </head>' +
     '  <body>' +
