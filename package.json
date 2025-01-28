@@ -2,9 +2,9 @@
   "name": "xpto",
   "version": "1.0.0",
   "description": "xpto url shortener",
-  "main": "main.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
