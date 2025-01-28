@@ -1,28 +1,27 @@
 {
-  "name": "xablau",
+  "name": "xpto",
   "version": "1.0.0",
-  "description": "xablau url shortener",
-  "main": "server.js",
+  "description": "xpto url shortener",
+  "main": "main.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node main.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pilovieira/xablau-url-short.git"
+    "url": "git+https://github.com/pilovieira/xpto-url-shortener.git"
   },
   "author": "pilo-vieira",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pilovieira/xablau-url-short/issues"
+    "url": "https://github.com/pilovieira/xpto-url-shortener/issues"
   },
-  "homepage": "https://github.com/pilovieira/xablau-url-short#readme",
+  "homepage": "https://github.com/pilovieira/xpto-url-shortener#readme",
   "dependencies": {
-    "express": "^4.17.1",
-    "http-server": "^0.12.3",
-    "redis": "^3.0.2"
+    "express": "^4.21.2",
+    "http-server": "^14.1.1",
+    "redis": "^4.7.0"
   },
   "engines": {
-    "node": "12.x"
+    "node": "22"
   }
 }
