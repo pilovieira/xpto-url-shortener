@@ -31,8 +31,11 @@ const redirect = (req, res) => {
         logger.warn(`Redirect URL invalid key - Key: ${key}`);
         return writeHtml(res);
       }
+
+      const finalUrl = !url.startsWith("http") ? `https://${url}` : url;
+
       // Immediate redirect response
-      res.writeHead(302, { Location: url });
+      res.writeHead(302, { Location: finalUrl });
       res.end();
       // Perform logging and count increment asynchronously without delaying redirect
       setImmediate(() => {
