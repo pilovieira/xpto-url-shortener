@@ -9,20 +9,32 @@ if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
   throw new Error("ADMIN_EMAIL or ADMIN_PASSWORD not defined in .env");
 }
 
-/** Checks admin session cookie */
-const isAuth = (req) => {
+// Initialize Redis client for admin auth
+const Redis = require('ioredis');
+const authRedis = new Redis();
+
+/** Checks admin session token stored in Redis */
+const isAuth = async (req) => {
   const cookieHeader = req.headers.cookie || '';
   const cookies = Object.fromEntries(
     cookieHeader.split(';').map(c => c.trim().split('='))
   );
-  return cookies.admin_session === 'authenticated';
+  const token = cookies.admin_token;
+  if (!token) return false;
+  try {
+    const exists = await authRedis.exists(`admin_token:${token}`);
+    return exists === 1;
+  } catch (e) {
+    console.error(`Auth token validation error: ${e.message}`);
+    return false;
+  }
 };
 
 /** Serve admin page or login */
-const adminPage = (req, res) => {
+const adminPage = async (req, res) => {
   const fs = require('fs');
   const path = require('path');
-  if (isAuth(req)) {
+  if (await isAuth(req)) {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(fs.readFileSync(path.join(__dirname, 'admin_dashboard.html'), 'utf-8'));
   } else {
@@ -32,10 +44,15 @@ const adminPage = (req, res) => {
 };
 
 /** Handle admin login */
-const adminLogin = (req, res) => {
+const adminLogin = async (req, res) => {
   const { email, password } = req.body || {};
   if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-    res.cookie('admin_session', 'authenticated', { path: '/', httpOnly: true });
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(16).toString('hex');
+    // Store token in Redis with 24h TTL (86400 seconds)
+    await authRedis.setex(`admin_token:${token}`, 86400, '1');
+    // Set token cookie
+    res.cookie('admin_token', token, { path: '/', httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
     res.status(200).json({ success: true });
   } else {
     res.status(401).json({ fail: 'Invalid credentials' });
@@ -43,8 +60,17 @@ const adminLogin = (req, res) => {
 };
 
 /** Handle admin logout */
-const adminLogout = (req, res) => {
-  res.clearCookie('admin_session', { path: '/' });
+const adminLogout = async (req, res) => {
+  // Remove token from Redis if present
+  const cookieHeader = req.headers.cookie || '';
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map(c => c.trim().split('='))
+  );
+  const token = cookies.admin_token;
+  if (token) {
+    await authRedis.del(`admin_token:${token}`);
+  }
+  res.clearCookie('admin_token', { path: '/' });
   res.writeHead(302, { 'Location': '/admin' });
   res.end();
 };
