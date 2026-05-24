@@ -562,8 +562,10 @@
         }
 
         const data = await response.json();
-        
-        totalClicks.innerText = data.totalCount.toLocaleString();
+
+        // Sum redirections from all per-key counts
+        const totalRedirections = data.keys.reduce((sum, item) => sum + (item.count || 0), 0);
+        totalClicks.innerText = totalRedirections.toLocaleString();
         activeKeysCount.innerText = data.keys.length.toLocaleString();
 
         // 1. Populate Keys Panel
