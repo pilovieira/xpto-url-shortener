@@ -17,12 +17,13 @@
   },
   "homepage": "https://github.com/pilovieira/xpto-url-shortener#readme",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "http-server": "^14.1.1",
     "ioredis": "^5.4.2",
     "redis": "^4.7.0"
   },
   "engines": {
-    "node": "22"
+    "node": "24"
   }
 }
