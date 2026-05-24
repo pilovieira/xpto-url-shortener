@@ -391,6 +391,108 @@
       white-space: nowrap;
       display: block;
     }
+
+    /* Create Key Card */
+    .create-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      margin-bottom: 32px;
+    }
+
+    .create-card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .create-card-title::before {
+      content: '+';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      border-radius: 6px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .create-form {
+      display: grid;
+      grid-template-columns: 1fr 2fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    @media (max-width: 700px) {
+      .create-form { grid-template-columns: 1fr; }
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .form-field input {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-field input:focus {
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+    }
+
+    .form-field input.input-error {
+      border-color: rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .btn-create {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 12px 24px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-create:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-create:active { transform: translateY(0); }
+    .btn-create:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   </style>
 </head>
 <body>
@@ -412,6 +514,22 @@
       <div class="stat-card stat-pink">
         <div class="stat-label">Active Keys</div>
         <div class="stat-value" id="activeKeysCount">0</div>
+      </div>
+    </div>
+
+    <!-- Create Short URL Card -->
+    <div class="create-card">
+      <div class="create-card-title">Create Short URL</div>
+      <div class="create-form">
+        <div class="form-field">
+          <label for="createKey">Short Key</label>
+          <input type="text" id="createKey" placeholder="my-link" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-field">
+          <label for="createUrl">Destination URL</label>
+          <input type="url" id="createUrl" placeholder="https://example.com/long-url" autocomplete="off">
+        </div>
+        <button class="btn-create" id="createBtn" onclick="createKey()">Create</button>
       </div>
     </div>
 
@@ -661,6 +779,47 @@
       }).catch(() => {
         showToast('Failed to copy to clipboard', true);
       });
+    }
+
+    async function createKey() {
+      const keyInput = document.getElementById('createKey');
+      const urlInput = document.getElementById('createUrl');
+      const btn = document.getElementById('createBtn');
+      const key = keyInput.value.trim();
+      const url = urlInput.value.trim();
+
+      keyInput.classList.remove('input-error');
+      urlInput.classList.remove('input-error');
+
+      if (!key) { keyInput.classList.add('input-error'); keyInput.focus(); return; }
+      if (!url) { urlInput.classList.add('input-error'); urlInput.focus(); return; }
+
+      btn.disabled = true;
+      btn.innerText = 'Creating...';
+      try {
+        const res = await fetch('/admin/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, url })
+        });
+        const data = await res.json();
+        if (res.status === 201) {
+          showToast(`Short link "/${key}" created!`);
+          keyInput.value = '';
+          urlInput.value = '';
+          fetchData();
+        } else if (res.status === 409) {
+          keyInput.classList.add('input-error');
+          showToast(data.fail, true);
+        } else {
+          showToast(data.fail || 'Failed to create key', true);
+        }
+      } catch (err) {
+        showToast('Network error while creating key.', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Create';
+      }
     }
 
     // Initial load

@@ -139,4 +139,25 @@ const adminDeleteKey = async (req, res) => {
   });
 };
 
-module.exports = { ADMIN_EMAIL, ADMIN_PASSWORD, isAuth, adminPage, adminLogin, adminLogout, adminData, adminDeleteKey };
+/** Create a new key with a custom slug — checks for conflicts first */
+const adminCreateKey = async (req, res) => {
+  if (!await isAuth(req)) {
+    return res.status(401).json({ fail: 'Unauthorized' });
+  }
+  const { key, url } = req.body || {};
+  if (!key || !url) return res.status(400).json({ fail: 'Both key and url are required' });
+  // Validate key: alphanumeric + hyphens only
+  if (!/^[a-zA-Z0-9-]+$/.test(key)) {
+    return res.status(400).json({ fail: 'Key may only contain letters, numbers and hyphens' });
+  }
+  const redisKey = `xpto-url:keys:${key}`;
+  const existing = await authRedis.get(redisKey);
+  if (existing) {
+    return res.status(409).json({ fail: `Key "${key}" already exists` });
+  }
+  await authRedis.set(redisKey, url);
+  res.status(201).json({ key, url });
+};
+
+module.exports = { ADMIN_EMAIL, ADMIN_PASSWORD, isAuth, adminPage, adminLogin, adminLogout, adminData, adminDeleteKey, adminCreateKey };
+
