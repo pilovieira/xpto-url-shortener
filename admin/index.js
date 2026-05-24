@@ -1,4 +1,4 @@
-// admin.js - extracted admin logic from app.js
+// admin/index.js - admin logic
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -36,10 +36,10 @@ const adminPage = async (req, res) => {
   const path = require('path');
   if (await isAuth(req)) {
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(fs.readFileSync(path.join(__dirname, 'admin_dashboard.html'), 'utf-8'));
+    res.end(fs.readFileSync(path.join(__dirname, 'dashboard.html'), 'utf-8'));
   } else {
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(fs.readFileSync(path.join(__dirname, 'admin_login.html'), 'utf-8'));
+    res.end(fs.readFileSync(path.join(__dirname, 'login.html'), 'utf-8'));
   }
 };
 

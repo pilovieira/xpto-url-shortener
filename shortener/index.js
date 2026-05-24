@@ -1,6 +1,5 @@
-// shortener.js – core URL shortening logic
-// Requires shared logger and Redis instance
-const logger = require('./logger');
+// shortener/index.js – core URL shortening logic
+const logger = require('../logger');
 const Redis = require('ioredis');
 const fs = require('fs');
 const path = require('path');
