@@ -1,22 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Xpto Url Shortener</title>
-    <link rel="stylesheet" href="./public/src.css"/>
-    <link rel="icon" href="data:image/png;base64,iVBORw0KGgo=">
+    <title>XPTO URL Shortener</title>
+    <meta name="description" content="Create short URLs with a sleek dark glassmorphic UI">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --glass-bg: rgba(17, 24, 39, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            background-image: radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 40%), radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.12) 0px, transparent 40%);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .content-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        input#url {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        button.link {
+            background: var(--accent-purple);
+            border: none;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button.link:hover {
+            background: var(--accent-pink);
+        }
+
+        #fail {
+            color: var(--accent-pink);
+            margin-bottom: 12px;
+        }
+
+        .showShort {
+            display: block;
+            word-break: break-all;
+            margin: 12px 0;
+            font-weight: 600;
+        }
+    </style>
 </head>
+
 <body>
-<div id="message">
-    <div id="fail" class="center"></div>
-    <h1 class="center">XPTO</h1>
-    <p id="phrase" class="center">url shortener</p>
-    <div id="main"></div>
-    <div id="container-c27c8e057dc493e5d63f7d64274b33ad"></div>
-</div>
-<script src="./public/clipboard.min.js"></script>
-<script defer src="./public/src.js"></script>
-<script async="async" data-cfasync="false" src="//pl25762380.profitablecpmrate.com/c27c8e057dc493e5d63f7d64274b33ad/invoke.js"></script>
+    <div class="container" role="main">
+        <header class="header-bar" aria-label="Header">
+            <div>
+                <h1 class="logo-text">XPTO</h1>
+                <p class="subtitle">URL Shortener</p>
+            </div>
+        </header>
+        <section class="content-card" aria-live="polite">
+            <div id="fail" role="alert"></div>
+            <div id="main"></div>
+        </section>
+    </div>
+    <script src="./public/clipboard.min.js"></script>
+    <script type="module">
+// Front-end logic for XPTO URL Shortener
+// Uses modern async/await and concise DOM handling
+
+const mainPane = document.getElementById("main");
+const failPane = document.getElementById("fail");
+
+/** Render the URL input form */
+function renderForm() {
+  const formHtml = `
+    <input id="url" type="text" placeholder="Enter URL to shorten" />
+    <button class="link" id="createBtn">Short URL</button>
+  `;
+  mainPane.innerHTML = formHtml;
+  document.getElementById("createBtn").addEventListener("click", createShortUrl);
+}
+
+/** Create a short URL via the backend */
+async function createShortUrl() {
+  failPane.textContent = "";
+  const urlInput = document.getElementById("url");
+  const url = urlInput.value.trim();
+  if (!url) {
+    failPane.innerHTML = `<h1>Invalid URL</h1>`;
+    return;
+  }
+  console.log(`Creating URL for: '${url}'`);
+  try {
+    const res = await fetch("./", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url })
+    });
+    if (res.status === 201) {
+      const { key } = await res.json();
+      const shortUrl = `${location.origin}/${key}`;
+      console.log(`URL created: '${shortUrl}'`);
+      mainPane.innerHTML = `
+        <a id="shortUrl" class="showShort" href="${shortUrl}">${shortUrl}</a>
+        <button class="link clip">Copy</button>
+        <button class="link" id="newBtn">Short another URL</button>
+      `;
+      new ClipboardJS('.clip', { target: () => document.querySelector('#shortUrl') });
+      document.getElementById('newBtn').addEventListener('click', renderForm);
+    } else if (res.status === 400) {
+      const { fail } = await res.json();
+      failPane.innerHTML = `<h1>${fail}</h1>`;
+    } else {
+      failPane.innerHTML = `<h1>Unexpected error (${res.status})</h1>`;
+    }
+  } catch (e) {
+    failPane.innerHTML = `<h1>${e.message}</h1>`;
+  }
+}
+
+// Initialise UI on load
+renderForm();
+</script>
 </body>
+
 </html>

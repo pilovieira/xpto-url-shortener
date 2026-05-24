@@ -1,0 +1,113 @@
+// admin.js - extracted admin logic from app.js
+const dotenv = require('dotenv');
+dotenv.config();
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  throw new Error("ADMIN_EMAIL or ADMIN_PASSWORD not defined in .env");
+}
+
+/** Checks admin session cookie */
+const isAuth = (req) => {
+  const cookieHeader = req.headers.cookie || '';
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map(c => c.trim().split('='))
+  );
+  return cookies.admin_session === 'authenticated';
+};
+
+/** Serve admin page or login */
+const adminPage = (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  if (isAuth(req)) {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(fs.readFileSync(path.join(__dirname, 'admin_dashboard.html'), 'utf-8'));
+  } else {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(fs.readFileSync(path.join(__dirname, 'admin_login.html'), 'utf-8'));
+  }
+};
+
+/** Handle admin login */
+const adminLogin = (req, res) => {
+  const { email, password } = req.body || {};
+  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    res.cookie('admin_session', 'authenticated', { path: '/', httpOnly: true });
+    res.status(200).json({ success: true });
+  } else {
+    res.status(401).json({ fail: 'Invalid credentials' });
+  }
+};
+
+/** Handle admin logout */
+const adminLogout = (req, res) => {
+  res.clearCookie('admin_session', { path: '/' });
+  res.writeHead(302, { 'Location': '/admin' });
+  res.end();
+};
+
+/** Provide admin data (keys, logs, count) */
+const adminData = (req, res) => {
+  const Redis = require('ioredis');
+  const redis = new Redis();
+  if (!isAuth(req)) {
+    return res.status(401).json({ fail: 'Unauthorized' });
+  }
+  redis.keys('xpto-url:keys:*', (err, keys) => {
+    if (err) return res.status(500).json({ fail: err.message });
+    const fetchKeys = () => new Promise(resolve => {
+      if (keys.length === 0) return resolve([]);
+      const pipeline = redis.pipeline();
+      keys.forEach(k => pipeline.get(k));
+      pipeline.exec((err, results) => {
+        if (err) return resolve([]);
+        const list = keys.map((k, index) => ({
+          key: k.replace('xpto-url:keys:', ''),
+          url: results[index][1]
+        }));
+        resolve(list);
+      });
+    });
+    const fetchLogs = () => new Promise(resolve => {
+      redis.lrange('xpto-url:logs', 0, 99, (err, logs) => {
+        if (err || !logs) return resolve([]);
+        const parsed = logs.map(l => {
+          try { return JSON.parse(l); } catch { return null; }
+        }).filter(Boolean);
+        resolve(parsed);
+      });
+    });
+    const fetchCount = () => new Promise(resolve => {
+      redis.get('xpto-url:count', (err, count) => {
+        resolve(parseInt(count || 0, 10));
+      });
+    });
+    Promise.all([fetchKeys(), fetchLogs(), fetchCount()])
+      .then(([keyList, logList, count]) => {
+        res.status(200).json({ keys: keyList, logs: logList, totalCount: count });
+      });
+  });
+};
+
+/** Delete a specific key */
+const adminDeleteKey = (req, res) => {
+  const Redis = require('ioredis');
+  const redis = new Redis();
+  if (!isAuth(req)) {
+    return res.status(401).json({ fail: 'Unauthorized' });
+  }
+  const key = req.params.key;
+  if (!key) return res.status(400).json({ fail: 'Key is required' });
+  redis.del(`xpto-url:keys:${key}`, err => {
+    if (err) {
+      res.status(500).json({ fail: err.message });
+    } else {
+      res.status(200).json({ success: true });
+    }
+  });
+};
+
+module.exports = { ADMIN_EMAIL, ADMIN_PASSWORD, isAuth, adminPage, adminLogin, adminLogout, adminData, adminDeleteKey };
