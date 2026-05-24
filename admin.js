@@ -75,80 +75,62 @@ const adminLogout = async (req, res) => {
   res.end();
 };
 
-/** Provide admin data (keys, logs, count) */
-  const adminData = (req, res) => {
-    const Redis = require('ioredis');
-    const redis = new Redis();
-    if (!isAuth(req)) {
-      return res.status(401).json({ fail: 'Unauthorized' });
-    }
-    redis.keys('xpto-url:keys:*', (err, keys) => {
-      if (err) return res.status(500).json({ fail: err.message });
-      const fetchKeys = () => new Promise(resolve => {
-        if (keys.length === 0) return resolve([]);
-        const pipeline = redis.pipeline();
-        keys.forEach(k => pipeline.get(k));
-        pipeline.exec((err, results) => {
-          if (err) return resolve([]);
-          const list = keys.map((k, index) => ({
-            key: k.replace('xpto-url:keys:', ''),
-            url: results[index][1]
-          }));
-          resolve(list);
-        });
+/** Provide admin data (keys, logs) */
+const adminData = async (req, res) => {
+  if (!await isAuth(req)) {
+    return res.status(401).json({ fail: 'Unauthorized' });
+  }
+  authRedis.keys('xpto-url:keys:*', (err, keys) => {
+    if (err) return res.status(500).json({ fail: err.message });
+    const fetchKeys = () => new Promise(resolve => {
+      if (keys.length === 0) return resolve([]);
+      const pipeline = authRedis.pipeline();
+      keys.forEach(k => pipeline.get(k));
+      pipeline.exec((err, results) => {
+        if (err) return resolve([]);
+        const list = keys.map((k, index) => ({
+          key: k.replace('xpto-url:keys:', ''),
+          url: results[index][1]
+        }));
+        resolve(list);
       });
-      const fetchCounts = () => new Promise(resolve => {
-        if (keys.length === 0) return resolve({});
-        const countKeyPattern = keys.map(k => `xpto-url:count:${k.replace('xpto-url:keys:', '')}`);
-        const pipeline = redis.pipeline();
-        countKeyPattern.forEach(ck => pipeline.get(ck));
-        pipeline.exec((err, results) => {
-          if (err) return resolve({});
-          const counts = {};
-          results.forEach((res, idx) => {
-            const count = parseInt(res[1] || '0', 10);
-            const key = keys[idx].replace('xpto-url:keys:', '');
-            counts[key] = count;
-          });
-          resolve(counts);
-        });
-      });
-      const fetchLogs = () => new Promise(resolve => {
-        redis.lrange('xpto-url:logs', 0, 99, (err, logs) => {
-          if (err || !logs) return resolve([]);
-          const parsed = logs.map(l => {
-            try { return JSON.parse(l); } catch { return null; }
-          }).filter(Boolean);
-          resolve(parsed);
-        });
-      });
-      const fetchCount = () => new Promise(resolve => {
-        redis.get('xpto-url:count', (err, count) => {
-          resolve(parseInt(count || 0, 10));
-        });
-      });
-      Promise.all([fetchKeys(), fetchCounts(), fetchLogs(), fetchCount()])
-        .then(([keyList, counts, logList, totalCount]) => {
-          // Attach per-key counts to each key object
-          const enrichedKeys = keyList.map(k => ({
-            ...k,
-            count: counts[k.key] || 0
-          }));
-          res.status(200).json({ keys: enrichedKeys, logs: logList, totalCount });
-        });
     });
-  };
+    const fetchCounts = () => new Promise(resolve => {
+      if (keys.length === 0) return resolve({});
+      const countKeys = keys.map(k => `xpto-url:count:${k.replace('xpto-url:keys:', '')}`);
+      const pipeline = authRedis.pipeline();
+      countKeys.forEach(ck => pipeline.get(ck));
+      pipeline.exec((err, results) => {
+        if (err) return resolve({});
+        const counts = {};
+        results.forEach((res, idx) => {
+          counts[keys[idx].replace('xpto-url:keys:', '')] = parseInt(res[1] || '0', 10);
+        });
+        resolve(counts);
+      });
+    });
+    const fetchLogs = () => new Promise(resolve => {
+      authRedis.lrange('xpto-url:logs', 0, 99, (err, logs) => {
+        if (err || !logs) return resolve([]);
+        resolve(logs.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean));
+      });
+    });
+    Promise.all([fetchKeys(), fetchCounts(), fetchLogs()])
+      .then(([keyList, counts, logList]) => {
+        const enrichedKeys = keyList.map(k => ({ ...k, count: counts[k.key] || 0 }));
+        res.status(200).json({ keys: enrichedKeys, logs: logList });
+      });
+  });
+};
 
 /** Delete a specific key */
-const adminDeleteKey = (req, res) => {
-  const Redis = require('ioredis');
-  const redis = new Redis();
-  if (!isAuth(req)) {
+const adminDeleteKey = async (req, res) => {
+  if (!await isAuth(req)) {
     return res.status(401).json({ fail: 'Unauthorized' });
   }
   const key = req.params.key;
   if (!key) return res.status(400).json({ fail: 'Key is required' });
-  redis.del(`xpto-url:keys:${key}`, err => {
+  authRedis.del(`xpto-url:keys:${key}`, err => {
     if (err) {
       res.status(500).json({ fail: err.message });
     } else {
