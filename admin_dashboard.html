@@ -441,6 +441,7 @@
                 <th>Short Key</th>
                 <th>Short Link</th>
                 <th>Target Destination</th>
+                <th>Count</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -586,6 +587,7 @@
                   <a href="${item.url}" target="_blank">${item.url}</a>
                 </span>
               </td>
+              <td>${item.count}</td>
               <td>
                 <div class="actions-cell">
                   <button class="action-btn btn-copy" onclick="copyToClipboard('${shortLink}')">Copy</button>

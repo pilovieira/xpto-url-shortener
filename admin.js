@@ -50,47 +50,68 @@ const adminLogout = (req, res) => {
 };
 
 /** Provide admin data (keys, logs, count) */
-const adminData = (req, res) => {
-  const Redis = require('ioredis');
-  const redis = new Redis();
-  if (!isAuth(req)) {
-    return res.status(401).json({ fail: 'Unauthorized' });
-  }
-  redis.keys('xpto-url:keys:*', (err, keys) => {
-    if (err) return res.status(500).json({ fail: err.message });
-    const fetchKeys = () => new Promise(resolve => {
-      if (keys.length === 0) return resolve([]);
-      const pipeline = redis.pipeline();
-      keys.forEach(k => pipeline.get(k));
-      pipeline.exec((err, results) => {
-        if (err) return resolve([]);
-        const list = keys.map((k, index) => ({
-          key: k.replace('xpto-url:keys:', ''),
-          url: results[index][1]
-        }));
-        resolve(list);
+  const adminData = (req, res) => {
+    const Redis = require('ioredis');
+    const redis = new Redis();
+    if (!isAuth(req)) {
+      return res.status(401).json({ fail: 'Unauthorized' });
+    }
+    redis.keys('xpto-url:keys:*', (err, keys) => {
+      if (err) return res.status(500).json({ fail: err.message });
+      const fetchKeys = () => new Promise(resolve => {
+        if (keys.length === 0) return resolve([]);
+        const pipeline = redis.pipeline();
+        keys.forEach(k => pipeline.get(k));
+        pipeline.exec((err, results) => {
+          if (err) return resolve([]);
+          const list = keys.map((k, index) => ({
+            key: k.replace('xpto-url:keys:', ''),
+            url: results[index][1]
+          }));
+          resolve(list);
+        });
       });
+      const fetchCounts = () => new Promise(resolve => {
+        if (keys.length === 0) return resolve({});
+        const countKeyPattern = keys.map(k => `xpto-url:count:${k.replace('xpto-url:keys:', '')}`);
+        const pipeline = redis.pipeline();
+        countKeyPattern.forEach(ck => pipeline.get(ck));
+        pipeline.exec((err, results) => {
+          if (err) return resolve({});
+          const counts = {};
+          results.forEach((res, idx) => {
+            const count = parseInt(res[1] || '0', 10);
+            const key = keys[idx].replace('xpto-url:keys:', '');
+            counts[key] = count;
+          });
+          resolve(counts);
+        });
+      });
+      const fetchLogs = () => new Promise(resolve => {
+        redis.lrange('xpto-url:logs', 0, 99, (err, logs) => {
+          if (err || !logs) return resolve([]);
+          const parsed = logs.map(l => {
+            try { return JSON.parse(l); } catch { return null; }
+          }).filter(Boolean);
+          resolve(parsed);
+        });
+      });
+      const fetchCount = () => new Promise(resolve => {
+        redis.get('xpto-url:count', (err, count) => {
+          resolve(parseInt(count || 0, 10));
+        });
+      });
+      Promise.all([fetchKeys(), fetchCounts(), fetchLogs(), fetchCount()])
+        .then(([keyList, counts, logList, totalCount]) => {
+          // Attach per-key counts to each key object
+          const enrichedKeys = keyList.map(k => ({
+            ...k,
+            count: counts[k.key] || 0
+          }));
+          res.status(200).json({ keys: enrichedKeys, logs: logList, totalCount });
+        });
     });
-    const fetchLogs = () => new Promise(resolve => {
-      redis.lrange('xpto-url:logs', 0, 99, (err, logs) => {
-        if (err || !logs) return resolve([]);
-        const parsed = logs.map(l => {
-          try { return JSON.parse(l); } catch { return null; }
-        }).filter(Boolean);
-        resolve(parsed);
-      });
-    });
-    const fetchCount = () => new Promise(resolve => {
-      redis.get('xpto-url:count', (err, count) => {
-        resolve(parseInt(count || 0, 10));
-      });
-    });
-    Promise.all([fetchKeys(), fetchLogs(), fetchCount()])
-      .then(([keyList, logList, count]) => {
-        res.status(200).json({ keys: keyList, logs: logList, totalCount: count });
-      });
-  });
-};
+  };
 
 /** Delete a specific key */
 const adminDeleteKey = (req, res) => {
