@@ -23,16 +23,24 @@ const create = (req, res) => {
 
 /** Redirect to the original URL */
 const redirect = (req, res) => {
-  const key = req.url.replace('/', '');
+  let key = req.url.replace('/', '');
   if (key) {
-    logger.info(`Redirect requested - Key: ${key}`);
+    let urlParams = null;
+    if (key.includes("?")) {
+      const spl = key.split("?");
+      key = spl[0];
+      urlParams = spl[1];
+    }
+
+    logger.info(`Redirect requested - Key[${key}] | Params[${urlParams}]`);
     redis.get(`xpto-url:keys:${key}`, (urlErr, url) => {
       if (urlErr || !url) {
-        logger.warn(`Redirect URL invalid key - Key: ${key}`);
+        logger.warn(`Redirect URL invalid key - Key[${key}] Params[${urlParams}]`);
         return writeHtml(res);
       }
 
-      const finalUrl = !url.startsWith("http") ? `https://${url}` : url;
+      let finalUrl = !url.startsWith("http") ? `https://${url}` : url;
+      finalUrl += urlParams ? (url.includes("?") ? `&${urlParams}` : `?${urlParams}`) : "";
 
       // Immediate redirect response
       res.writeHead(302, { Location: finalUrl });
