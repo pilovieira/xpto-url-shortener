@@ -65,4 +65,4 @@ const writeHtml = (res) => {
   res.end();
 };
 
-module.exports = { create, redirect, writeHtml };
+module.exports = { create, redirect };

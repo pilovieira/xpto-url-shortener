@@ -22,7 +22,7 @@ app.listen(port, () => logger.info(`Service started. Listening on port ${port}!`
 
 const { adminPage, adminLogin, adminLogout, adminData, adminDeleteKey, adminCreateKey } = require('./admin');
 
-const { create, redirect, writeHtml } = require('./shortener');
+const { create, redirect } = require('./shortener');
 
 app.get('/admin', adminPage);
 app.post('/admin/login', adminLogin);

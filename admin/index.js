@@ -4,6 +4,7 @@ dotenv.config();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_TOKEN_TTL_MINUTES = Number(process.env.ADMIN_TOKEN_TTL_MINUTES) || 10;
 
 if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
   throw new Error("ADMIN_EMAIL or ADMIN_PASSWORD not defined in .env");
@@ -22,7 +23,7 @@ const isAuth = async (req) => {
   const token = cookies.admin_token;
   if (!token) return false;
   try {
-    const exists = await authRedis.exists(`admin_token:${token}`);
+    const exists = await authRedis.exists(`xpto-url:admin_token:${token}`);
     return exists === 1;
   } catch (e) {
     console.error(`Auth token validation error: ${e.message}`);
@@ -49,10 +50,10 @@ const adminLogin = async (req, res) => {
   if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
     const crypto = require('crypto');
     const token = crypto.randomBytes(16).toString('hex');
-    // Store token in Redis with 24h TTL (86400 seconds)
-    await authRedis.setex(`admin_token:${token}`, 86400, '1');
+    // Store token in Redis with TTL
+    await authRedis.setex(`xpto-url:admin_token:${token}`, ADMIN_TOKEN_TTL_MINUTES * 60, '1');
     // Set token cookie
-    res.cookie('admin_token', token, { path: '/', httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+    res.cookie('admin_token', token, { path: '/', httpOnly: true, maxAge: (ADMIN_TOKEN_TTL_MINUTES * 60 * 1000) });
     res.status(200).json({ success: true });
   } else {
     res.status(401).json({ fail: 'Invalid credentials' });
@@ -68,7 +69,7 @@ const adminLogout = async (req, res) => {
   );
   const token = cookies.admin_token;
   if (token) {
-    await authRedis.del(`admin_token:${token}`);
+    await authRedis.del(`xpto-url:admin_token:${token}`);
   }
   res.clearCookie('admin_token', { path: '/' });
   res.writeHead(302, { 'Location': '/admin' });
