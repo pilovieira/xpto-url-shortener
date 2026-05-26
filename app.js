@@ -20,11 +20,16 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 const port = process.env.PORT || 5000;
 app.listen(port, () => logger.info(`Service started. Listening on port ${port}!`));
 
-const { adminPage, adminLogin, adminLogout, adminData, adminDeleteKey, adminCreateKey } = require('./admin');
+const { adminPage, shortenerAdminPage, base58Page, adminLogin, adminLogout, adminData, adminDeleteKey, adminCreateKey } = require('./admin');
 
 const { create, redirect } = require('./shortener');
 
 app.get('/admin', adminPage);
+app.get('/admin/shortener', shortenerAdminPage);
+app.get('/admin-shortener', shortenerAdminPage);
+app.get('/admin/base58', base58Page);
+app.get('/base58', base58Page);
+
 app.post('/admin/login', adminLogin);
 app.get('/admin/logout', adminLogout);
 app.get('/admin/data', adminData);

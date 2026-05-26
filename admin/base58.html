@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XPTO - Base58 Encoder & Decoder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --accent-purple: #8b5cf6;
+      --accent-pink: #ec4899;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --glass-bg: rgba(17, 24, 39, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 40%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.12) 0px, transparent 40%);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .logo-section {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 10px 20px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: var(--danger);
+    }
+
+    /* Tools Grid */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 800px) {
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .tool-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .tool-title {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tool-title::before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .encoder-title::before {
+      background: var(--accent-purple);
+    }
+
+    .decoder-title::before {
+      background: var(--accent-pink);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    textarea {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 14px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 120px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    textarea:focus {
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+    }
+
+    .btn-action {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 14px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-action:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-action:active {
+      transform: translateY(0);
+    }
+
+    .output-area {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px dashed var(--glass-border);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 100px;
+      font-family: monospace;
+      font-size: 14px;
+      word-break: break-all;
+      white-space: pre-wrap;
+      position: relative;
+    }
+
+    .output-placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: none;
+    }
+
+    .copy-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111827;
+      border: 1px solid var(--glass-border);
+      border-left: 4px solid var(--success);
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-danger {
+      border-left-color: var(--danger);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-bar">
+      <div class="logo-section">
+        <div class="logo-text">XPTO</div>
+        <div class="subtitle">Base58 Encoding & Decoding Service</div>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <a href="/admin" class="logout-btn" style="border-color: var(--glass-border); color: var(--text-main);">Back to Hub</a>
+        <a href="/admin/logout" class="logout-btn">Logout</a>
+      </div>
+    </div>
+
+    <div class="tools-grid">
+      <!-- Encoder -->
+      <div class="tool-card">
+        <div class="tool-title encoder-title">Base58 Encoder</div>
+        
+        <div class="form-group">
+          <label for="encodeInput">Source Text (UTF-8)</label>
+          <textarea id="encodeInput" placeholder="Enter text to encode..."></textarea>
+        </div>
+
+        <button class="btn-action" onclick="handleEncode()">Encode to Base58</button>
+
+        <div class="form-group">
+          <label>Resulting Base58 Output</label>
+          <div class="output-area" id="encodeOutputContainer">
+            <span class="output-placeholder" id="encodePlaceholder">Output will appear here...</span>
+            <span id="encodeOutput"></span>
+            <button class="copy-btn" id="encodeCopyBtn" onclick="copyResult('encodeOutput')">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decoder -->
+      <div class="tool-card">
+        <div class="tool-title decoder-title">Base58 Decoder</div>
+
+        <div class="form-group">
+          <label for="decodeInput">Base58 String</label>
+          <textarea id="decodeInput" placeholder="Enter Base58 string to decode..."></textarea>
+        </div>
+
+        <button class="btn-action" onclick="handleDecode()">Decode Base58</button>
+
+        <div class="form-group">
+          <label>Decoded Plain Text</label>
+          <div class="output-area" id="decodeOutputContainer">
+            <span class="output-placeholder" id="decodePlaceholder">Output will appear here...</span>
+            <span id="decodeOutput"></span>
+            <button class="copy-btn" id="decodeCopyBtn" onclick="copyResult('decodeOutput')">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast" class="toast">Successfully copied to clipboard!</div>
+
+  <script>
+    const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    const ALPHABET_MAP = {};
+    for (let i = 0; i < ALPHABET.length; i++) {
+      ALPHABET_MAP[ALPHABET.charAt(i)] = i;
+    }
+
+    function encodeBase58(buffer) {
+      if (buffer.length === 0) return "";
+      const digits = [0];
+      for (let i = 0; i < buffer.length; i++) {
+        for (let j = 0; j < digits.length; j++) digits[j] <<= 8;
+        digits[0] += buffer[i];
+        let carry = 0;
+        for (let j = 0; j < digits.length; ++j) {
+          digits[j] += carry;
+          carry = (digits[j] / 58) | 0;
+          digits[j] %= 58;
+        }
+        while (carry > 0) {
+          digits.push(carry % 58);
+          carry = (carry / 58) | 0;
+        }
+      }
+      for (let i = 0; i < buffer.length - 1 && buffer[i] === 0; i++) {
+        digits.push(0);
+      }
+      return digits.reverse().map(d => ALPHABET.charAt(d)).join("");
+    }
+
+    function decodeBase58(string) {
+      if (string.length === 0) return new Uint8Array(0);
+      const bytes = [0];
+      for (let i = 0; i < string.length; i++) {
+        const c = string.charAt(i);
+        if (!(c in ALPHABET_MAP)) throw new Error("Non-base58 character: " + c);
+        for (let j = 0; j < bytes.length; j++) bytes[j] *= 58;
+        bytes[0] += ALPHABET_MAP[c];
+        let carry = 0;
+        for (let j = 0; j < bytes.length; ++j) {
+          bytes[j] += carry;
+          carry = (bytes[j] >> 8);
+          bytes[j] &= 0xff;
+        }
+        while (carry > 0) {
+          bytes.push(carry & 0xff);
+          carry >>= 8;
+        }
+      }
+      for (let i = 0; i < string.length - 1 && string.charAt(i) === "1"; i++) {
+        bytes.push(0);
+      }
+      return new Uint8Array(bytes.reverse());
+    }
+
+    function showToast(message, isDanger = false) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      if (isDanger) {
+        toast.classList.add('toast-danger');
+      } else {
+        toast.classList.remove('toast-danger');
+      }
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function handleEncode() {
+      const inputText = document.getElementById('encodeInput').value;
+      const placeholder = document.getElementById('encodePlaceholder');
+      const outputText = document.getElementById('encodeOutput');
+      const copyBtn = document.getElementById('encodeCopyBtn');
+
+      if (!inputText) {
+        placeholder.style.display = 'inline';
+        outputText.innerText = '';
+        copyBtn.style.display = 'none';
+        return;
+      }
+
+      try {
+        const encoder = new TextEncoder();
+        const buffer = encoder.encode(inputText);
+        const encoded = encodeBase58(buffer);
+        placeholder.style.display = 'none';
+        outputText.innerText = encoded;
+        copyBtn.style.display = 'inline';
+      } catch (err) {
+        showToast('Error during encoding: ' + err.message, true);
+      }
+    }
+
+    function handleDecode() {
+      const inputText = document.getElementById('decodeInput').value.trim();
+      const placeholder = document.getElementById('decodePlaceholder');
+      const outputText = document.getElementById('decodeOutput');
+      const copyBtn = document.getElementById('decodeCopyBtn');
+
+      if (!inputText) {
+        placeholder.style.display = 'inline';
+        outputText.innerText = '';
+        copyBtn.style.display = 'none';
+        return;
+      }
+
+      try {
+        const decodedBytes = decodeBase58(inputText);
+        const decoder = new TextDecoder();
+        const decodedText = decoder.decode(decodedBytes);
+        placeholder.style.display = 'none';
+        outputText.innerText = decodedText;
+        copyBtn.style.display = 'inline';
+      } catch (err) {
+        showToast('Invalid Base58 string: ' + err.message, true);
+        placeholder.style.display = 'inline';
+        outputText.innerText = '';
+        copyBtn.style.display = 'none';
+      }
+    }
+
+    function copyResult(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Successfully copied to clipboard!');
+      }).catch(() => {
+        showToast('Failed to copy to clipboard', true);
+      });
+    }
+  </script>
+</body>
+</html>
