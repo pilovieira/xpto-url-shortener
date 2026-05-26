@@ -276,10 +276,7 @@
         <div class="logo-text">XPTO</div>
         <div class="subtitle">Base58 Encoding & Decoding Service</div>
       </div>
-      <div style="display: flex; gap: 12px;">
-        <a href="/admin" class="logout-btn" style="border-color: var(--glass-border); color: var(--text-main);">Back to Hub</a>
-        <a href="/admin/logout" class="logout-btn">Logout</a>
-      </div>
+      <div id="nav-buttons" style="display: flex; gap: 12px;"></div>
     </div>
 
     <div class="tools-grid">
@@ -399,6 +396,21 @@
       }, 3000);
     }
 
+    document.addEventListener('DOMContentLoaded', () => {
+      const navButtons = document.getElementById('nav-buttons');
+      const isLoggedIn = document.cookie.split(';').some(item => item.trim().startsWith('admin_token='));
+      if (isLoggedIn) {
+        navButtons.innerHTML = `
+          <a href="/admin" class="logout-btn" style="border-color: var(--glass-border); color: var(--text-main);">Back to Hub</a>
+          <a href="/admin/logout" class="logout-btn">Logout</a>
+        `;
+      } else {
+        navButtons.innerHTML = `
+          <a href="/admin" class="logout-btn">Admin Login</a>
+        `;
+      }
+    });
+
     function handleEncode() {
       const inputText = document.getElementById('encodeInput').value;
       const placeholder = document.getElementById('encodePlaceholder');
@@ -419,6 +431,13 @@
         placeholder.style.display = 'none';
         outputText.innerText = encoded;
         copyBtn.style.display = 'inline';
+
+        // Log encoding to server
+        fetch('/base58/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'encode', input: inputText, output: encoded })
+        }).catch(err => console.error('Failed to log encode operation:', err));
       } catch (err) {
         showToast('Error during encoding: ' + err.message, true);
       }
@@ -444,6 +463,13 @@
         placeholder.style.display = 'none';
         outputText.innerText = decodedText;
         copyBtn.style.display = 'inline';
+
+        // Log decoding to server
+        fetch('/base58/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'decode', input: inputText, output: decodedText })
+        }).catch(err => console.error('Failed to log decode operation:', err));
       } catch (err) {
         showToast('Invalid Base58 string: ' + err.message, true);
         placeholder.style.display = 'inline';
