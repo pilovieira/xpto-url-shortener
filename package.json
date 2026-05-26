@@ -1,7 +1,7 @@
 {
-  "name": "xpto",
+  "name": "xpto-tools",
   "version": "1.0.0",
-  "description": "xpto url shortener",
+  "description": "XPTO Tools - URL Shortener and Base58 Utilities",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
