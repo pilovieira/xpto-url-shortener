@@ -24,12 +24,6 @@ app.post('/admin/login', adminLogin);
 app.get('/admin/logout', adminLogout);
 app.get('/admin/shortener', shortenerAdminPage);
 
-//tools
-app.get('/tools', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(fs.readFileSync(path.join(__dirname, 'tools', 'index.html'), 'utf-8'));
-});
-
 //base58
 const { logBase58Action } = require('./base58');
 app.get('/base58', (req, res) => {
@@ -41,11 +35,19 @@ app.get('/admin/base58-admin', base58AdminPage);
 app.get('/admin/base58/data', base58AdminData);
 
 //shortener
-const { create, redirect } = require('./shortener');
-app.get('/shortener', redirect);
+const { createShortUrl, redirectToUrl, shortenerPage } = require('./shortener');
+app.get('/shortener', shortenerPage);
+app.post('/shortener', createShortUrl);
 app.get('/admin/shortener/data', shortenerAdminData);
 app.delete('/admin/shortener/keys/:key', shortenerAdminDeleteKey);
 app.post('/admin/shortener/keys', shortenerAdminCreateKey);
 
-app.post('/*', create);
-app.get('/*', redirect);
+app.get('/*', (req, res) => {
+  let key = req.url.replace('/', '');
+  if (key) {
+    redirectToUrl(key, req, res);
+  } else {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(fs.readFileSync(path.join(__dirname, 'tools', 'index.html'), 'utf-8'));
+  }
+});
