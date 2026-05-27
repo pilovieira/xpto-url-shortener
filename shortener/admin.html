@@ -702,7 +702,7 @@
       logsPanel.style.opacity = '0.5';
 
       try {
-        const response = await fetch('/admin/data');
+        const response = await fetch('/admin/shortener/data');
         if (!response.ok) {
           if (response.status === 401) {
             window.location.href = '/admin';
@@ -790,7 +790,7 @@
       if (!confirm(`Are you sure you want to delete short key "${key}"?`)) return;
 
       try {
-        const response = await fetch(`/admin/keys/${key}`, {
+        const response = await fetch(`/admin/shortener/keys/${key}`, {
           method: 'DELETE'
         });
 
@@ -829,7 +829,7 @@
       btn.disabled = true;
       btn.innerText = 'Creating...';
       try {
-        const res = await fetch('/admin/keys', {
+        const res = await fetch('/admin/shortener/keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key, url })

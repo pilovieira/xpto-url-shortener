@@ -1,11 +1,8 @@
 // shortener/index.js – core URL shortening logic
 const logger = require('../logger');
-const Redis = require('ioredis');
+const { redisDb } = require('../util/db');
 const fs = require('fs');
 const path = require('path');
-
-// Initialize Redis (same config as app.js)
-const redis = new Redis();
 
 /** Create a short URL */
 const create = (req, res) => {
@@ -13,7 +10,7 @@ const create = (req, res) => {
   try {
     const key = parseInt(Date.now() / 1000).toString(36);
     logger.info(`Save requested - Key: ${key}, URL: ${req.body.url}`);
-    redis.set(`xpto-url:keys:${key}`, req.body.url);
+    redisDb.set(`xpto-url:keys:${key}`, req.body.url);
     res.status(201).json({ key });
   } catch (e) {
     logger.error(`Failed to create short URL: ${e.message}`);
@@ -33,7 +30,7 @@ const redirect = (req, res) => {
     }
 
     logger.info(`Redirect requested - Key[${key}] | Params[${urlParams}]`);
-    redis.get(`xpto-url:keys:${key}`, (urlErr, url) => {
+    redisDb.get(`xpto-url:keys:${key}`, (urlErr, url) => {
       if (urlErr || !url) {
         logger.warn(`Redirect URL invalid key - Key[${key}] Params[${urlParams}]`);
         return writeHtml(res);
@@ -50,10 +47,10 @@ const redirect = (req, res) => {
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
         const userAgent = req.headers['user-agent'] || 'Unknown';
         const logData = JSON.stringify({ key, url, ip, userAgent, timestamp: new Date().toISOString() });
-        redis.lpush('xpto-url:logs', logData);
-        redis.ltrim('xpto-url:logs', 0, 99);
+        redisDb.lpush('xpto-url:logs', logData);
+        redisDb.ltrim('xpto-url:logs', 0, 99);
         const keyCountKey = `xpto-url:count:${key}`;
-        redis.incr(keyCountKey, (incErr) => {
+        redisDb.incr(keyCountKey, (incErr) => {
           if (incErr) {
             logger.error(`Failed to increment count for key ${key}: ${incErr.message}`);
           }

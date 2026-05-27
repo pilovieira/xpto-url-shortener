@@ -1,7 +1,8 @@
 // admin/index.js - admin logic
 const fs = require('fs');
 const path = require('path');
-const { isAuth, adminLogin, adminLogout, authRedis } = require('./auth');
+const { isAuth, adminLogin, adminLogout } = require('../util/auth');
+const { redisDb } = require('../util/db');
 
 /** Serve admin hub page or login */
 const adminPage = async (req, res) => {
@@ -27,15 +28,15 @@ const shortenerAdminPage = async (req, res) => {
 
 
 /** Provide admin data (keys, logs) */
-const adminData = async (req, res) => {
+const shortenerAdminData = async (req, res) => {
   if (!await isAuth(req)) {
     return res.status(401).json({ fail: 'Unauthorized' });
   }
-  authRedis.keys('xpto-url:keys:*', (err, keys) => {
+  redisDb.keys('xpto-url:keys:*', (err, keys) => {
     if (err) return res.status(500).json({ fail: err.message });
     const fetchKeys = () => new Promise(resolve => {
       if (keys.length === 0) return resolve([]);
-      const pipeline = authRedis.pipeline();
+      const pipeline = redisDb.pipeline();
       keys.forEach(k => pipeline.get(k));
       pipeline.exec((err, results) => {
         if (err) return resolve([]);
@@ -49,7 +50,7 @@ const adminData = async (req, res) => {
     const fetchCounts = () => new Promise(resolve => {
       if (keys.length === 0) return resolve({});
       const countKeys = keys.map(k => `xpto-url:count:${k.replace('xpto-url:keys:', '')}`);
-      const pipeline = authRedis.pipeline();
+      const pipeline = redisDb.pipeline();
       countKeys.forEach(ck => pipeline.get(ck));
       pipeline.exec((err, results) => {
         if (err) return resolve({});
@@ -61,7 +62,7 @@ const adminData = async (req, res) => {
       });
     });
     const fetchLogs = () => new Promise(resolve => {
-      authRedis.lrange('xpto-url:logs', 0, 99, (err, logs) => {
+      redisDb.lrange('xpto-url:logs', 0, 99, (err, logs) => {
         if (err || !logs) return resolve([]);
         resolve(logs.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean));
       });
@@ -75,13 +76,13 @@ const adminData = async (req, res) => {
 };
 
 /** Delete a specific key */
-const adminDeleteKey = async (req, res) => {
+const shortenerAdminDeleteKey = async (req, res) => {
   if (!await isAuth(req)) {
     return res.status(401).json({ fail: 'Unauthorized' });
   }
   const key = req.params.key;
   if (!key) return res.status(400).json({ fail: 'Key is required' });
-  authRedis.del(`xpto-url:keys:${key}`, err => {
+  redisDb.del(`xpto-url:keys:${key}`, err => {
     if (err) {
       res.status(500).json({ fail: err.message });
     } else {
@@ -91,7 +92,7 @@ const adminDeleteKey = async (req, res) => {
 };
 
 /** Create a new key with a custom slug — checks for conflicts first */
-const adminCreateKey = async (req, res) => {
+const shortenerAdminCreateKey = async (req, res) => {
   if (!await isAuth(req)) {
     return res.status(401).json({ fail: 'Unauthorized' });
   }
@@ -102,11 +103,11 @@ const adminCreateKey = async (req, res) => {
     return res.status(400).json({ fail: 'Key may only contain letters, numbers and hyphens' });
   }
   const redisKey = `xpto-url:keys:${key}`;
-  const existing = await authRedis.get(redisKey);
+  const existing = await redisDb.get(redisKey);
   if (existing) {
     return res.status(409).json({ fail: `Key "${key}" already exists` });
   }
-  await authRedis.set(redisKey, url);
+  await redisDb.set(redisKey, url);
   res.status(201).json({ key, url });
 };
 
@@ -126,7 +127,7 @@ const base58AdminData = async (req, res) => {
   if (!await isAuth(req)) {
     return res.status(401).json({ fail: 'Unauthorized' });
   }
-  authRedis.lrange('xpto-base58:logs', 0, 99, (err, logs) => {
+  redisDb.lrange('xpto-base58:logs', 0, 99, (err, logs) => {
     if (err) return res.status(500).json({ fail: err.message });
     const logList = (logs || []).map(l => {
       try { return JSON.parse(l); } catch { return null; }
@@ -135,35 +136,7 @@ const base58AdminData = async (req, res) => {
   });
 };
 
-/** Log base58 actions */
-const logBase58Action = async (req, res) => {
-  const { type, input, output } = req.body || {};
-  if (!type || !input || output === undefined) {
-    return res.status(400).json({ fail: 'Missing logging parameters' });
-  }
-  try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    const userAgent = req.headers['user-agent'] || 'Unknown';
-    const logData = JSON.stringify({
-      type,
-      input: input.length > 2000 ? input.substring(0, 2000) + '...' : input,
-      output: output.length > 2000 ? output.substring(0, 2000) + '...' : output,
-      ip,
-      userAgent,
-      timestamp: new Date().toISOString()
-    });
-    authRedis.lpush('xpto-base58:logs', logData, (err) => {
-      if (err) {
-        console.error(`Failed to push base58 log: ${err.message}`);
-        return res.status(500).json({ fail: 'Database error' });
-      }
-      authRedis.ltrim('xpto-base58:logs', 0, 99);
-      res.status(201).json({ success: true });
-    });
-  } catch (e) {
-    res.status(500).json({ fail: e.message });
-  }
-};
+
 
 module.exports = {
   isAuth,
@@ -172,9 +145,8 @@ module.exports = {
   base58AdminPage,
   adminLogin,
   adminLogout,
-  adminData,
+  shortenerAdminData,
   base58AdminData,
-  adminDeleteKey,
-  adminCreateKey,
-  logBase58Action
+  shortenerAdminDeleteKey,
+  shortenerAdminCreateKey
 };
