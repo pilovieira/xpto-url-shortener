@@ -20,21 +20,24 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 const port = process.env.PORT || 5000;
 app.listen(port, () => logger.info(`Service started. Listening on port ${port}!`));
 
-const { adminPage, shortenerAdminPage, base58Page, base58AdminPage, adminLogin, adminLogout, adminData, base58AdminData, adminDeleteKey, adminCreateKey, logBase58Action } = require('./admin');
+const { adminPage, shortenerAdminPage, base58AdminPage, adminLogin, adminLogout, adminData, base58AdminData, adminDeleteKey, adminCreateKey, logBase58Action } = require('./admin');
 
 const { create, redirect } = require('./shortener');
 
 //admin pages
 app.get('/admin', adminPage);
 app.get('/admin/shortener', shortenerAdminPage);
-app.get('/admin/base58', base58Page);
+app.get('/admin/base58-admin', base58AdminPage);
 
 //tools pages
 app.get('/tools', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(fs.readFileSync(path.join(__dirname, 'tools', 'index.html'), 'utf-8'));
 });
-app.get('/base58', base58Page);
+app.get('/base58', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(fs.readFileSync(path.join(__dirname, 'base58', 'index.html'), 'utf-8'));
+});
 app.get('/shortener', redirect);
 
 app.post('/admin/login', adminLogin);

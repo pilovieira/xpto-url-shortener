@@ -18,18 +18,13 @@ const adminPage = async (req, res) => {
 const shortenerAdminPage = async (req, res) => {
   if (await isAuth(req)) {
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(fs.readFileSync(path.join(__dirname, 'shortener-admin.html'), 'utf-8'));
+    res.end(fs.readFileSync(path.join(__dirname, '..', 'shortener', 'admin.html'), 'utf-8'));
   } else {
     res.writeHead(302, { 'Location': '/admin' });
     res.end();
   }
 };
 
-/** Serve base58 encoder/decoder page */
-const base58Page = async (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(fs.readFileSync(path.join(__dirname, '..', 'base58', 'index.html'), 'utf-8'));
-};
 
 /** Provide admin data (keys, logs) */
 const adminData = async (req, res) => {
@@ -119,7 +114,7 @@ const adminCreateKey = async (req, res) => {
 const base58AdminPage = async (req, res) => {
   if (await isAuth(req)) {
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(fs.readFileSync(path.join(__dirname, 'base58-admin.html'), 'utf-8'));
+    res.end(fs.readFileSync(path.join(__dirname, '..', 'base58', 'admin.html'), 'utf-8'));
   } else {
     res.writeHead(302, { 'Location': '/admin' });
     res.end();
@@ -174,7 +169,6 @@ module.exports = {
   isAuth,
   adminPage,
   shortenerAdminPage,
-  base58Page,
   base58AdminPage,
   adminLogin,
   adminLogout,
