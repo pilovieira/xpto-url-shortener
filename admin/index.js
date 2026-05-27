@@ -28,7 +28,7 @@ const shortenerAdminPage = async (req, res) => {
 /** Serve base58 encoder/decoder page */
 const base58Page = async (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(fs.readFileSync(path.join(__dirname, 'base58.html'), 'utf-8'));
+  res.end(fs.readFileSync(path.join(__dirname, '..', 'base58', 'index.html'), 'utf-8'));
 };
 
 /** Provide admin data (keys, logs) */

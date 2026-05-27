@@ -24,12 +24,18 @@ const { adminPage, shortenerAdminPage, base58Page, base58AdminPage, adminLogin, 
 
 const { create, redirect } = require('./shortener');
 
+//admin pages
 app.get('/admin', adminPage);
 app.get('/admin/shortener', shortenerAdminPage);
-app.get('/admin-shortener', shortenerAdminPage);
 app.get('/admin/base58', base58Page);
+
+//tools pages
+app.get('/tools', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(fs.readFileSync(path.join(__dirname, 'tools', 'index.html'), 'utf-8'));
+});
 app.get('/base58', base58Page);
-app.get('/admin/base58-admin', base58AdminPage);
+app.get('/shortener', redirect);
 
 app.post('/admin/login', adminLogin);
 app.get('/admin/logout', adminLogout);
