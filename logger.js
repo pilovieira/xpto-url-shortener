@@ -23,17 +23,17 @@ const colors = {
 
 function requestLogger(req, res, next) {
   const start = performance.now();
-  
+
   // Extract client IP address
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
   const method = req.method;
   const url = req.originalUrl || req.url;
-  const userAgent = req.headers['user-agent'] || 'Unknown UA';
+  const userAgent = req.headers['user-agent'] || req.headers['User-Agent'] || 'Unknown UA';
 
   res.on('finish', () => {
     const duration = (performance.now() - start).toFixed(2);
     const status = res.statusCode;
-    
+
     // Color code status codes
     let statusColor = colors.info;
     if (status >= 500) {
@@ -43,16 +43,16 @@ function requestLogger(req, res, next) {
     } else if (status >= 300) {
       statusColor = '\x1b[36m'; // Cyan for redirects
     }
-    
+
     // Color code methods
     let methodColor = colors.info;
     if (method === 'POST') {
       methodColor = '\x1b[35m'; // Magenta for POST
     }
-    
+
     const timestamp = getTimestamp();
     const formattedLog = `${colors.dim}[${timestamp}]${colors.reset} ${colors.access}[ACCESS]${colors.reset} ${methodColor}${method.padEnd(5)}${colors.reset} ${url} - Status: ${statusColor}${status}${colors.reset} - Duration: ${colors.dim}${duration}ms${colors.reset} - IP: ${colors.dim}${ip}${colors.reset} - UA: ${colors.dim}${userAgent}${colors.reset}`;
-    
+
     console.log(formattedLog);
   });
 
