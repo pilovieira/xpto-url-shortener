@@ -18,6 +18,12 @@ app.listen(port, () => logger.info(`Service started. Listening on port ${port}!`
 
 const { adminPage, shortenerAdminPage, base58AdminPage, adminLogin, adminLogout, shortenerAdminData, base58AdminData, shortenerAdminDeleteKey, shortenerAdminCreateKey } = require('./admin');
 
+//favicon
+app.get('/favicon.ico', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'image/png' });
+  res.end(fs.readFileSync(path.join(__dirname, 'public', 'favicon.png')));
+});
+
 //admin
 app.get('/admin', adminPage);
 app.post('/admin/login', adminLogin);
@@ -41,6 +47,12 @@ app.post('/shortener', createShortUrl);
 app.get('/admin/shortener/data', shortenerAdminData);
 app.delete('/admin/shortener/keys/:key', shortenerAdminDeleteKey);
 app.post('/admin/shortener/keys', shortenerAdminCreateKey);
+
+//token generator
+app.get('/token', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(fs.readFileSync(path.join(__dirname, 'token', 'index.html'), 'utf-8'));
+});
 
 app.get('/*', (req, res) => {
   let key = req.url.replace('/', '');

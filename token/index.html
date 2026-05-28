@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Token Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --surface-2: #1c1c1c;
+      --border: #2a2a2a;
+      --border-active: #404040;
+      --text: #e8e8e8;
+      --muted: #6b6b6b;
+      --accent: #c8f135;
+      --accent-dim: rgba(200, 241, 53, 0.12);
+      --accent-dim2: rgba(200, 241, 53, 0.06);
+      --danger: #ff5c5c;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-mark svg { width: 18px; height: 18px; }
+
+    header h1 {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    header .version {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .panel {
+      border-right: 1px solid var(--border);
+      padding: 2rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .panel-section h2 {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+
+    label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    input[type="number"], select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 0.6rem 0.75rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      cursor: pointer;
+    }
+
+    .toggle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .toggle-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 0.55rem 0.5rem;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .toggle-btn:hover { border-color: var(--border-active); color: var(--text); }
+
+    .toggle-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 4px;
+      cursor: pointer;
+    }
+
+    .range-val {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent);
+      min-width: 2.5rem;
+      text-align: right;
+    }
+
+    .generate-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #0d0d0d;
+      border: none;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-top: auto;
+    }
+
+    .generate-btn:hover { opacity: 0.9; }
+    .generate-btn:active { transform: scale(0.99); }
+
+    .output-area {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .output-toolbar {
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .output-toolbar .stat {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    .output-toolbar .stat span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .toolbar-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--border-active);
+      color: var(--text);
+    }
+
+    .action-btn.copied {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tokens-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .tokens-grid {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .tokens-grid.layout-list { grid-template-columns: 1fr; }
+    .tokens-grid.layout-2col { grid-template-columns: repeat(2, 1fr); }
+    .tokens-grid.layout-3col { grid-template-columns: repeat(3, 1fr); }
+
+    .token-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .token-item:hover {
+      border-color: var(--border-active);
+      background: var(--surface-2);
+    }
+
+    .token-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: transparent;
+      transition: background 0.12s;
+    }
+
+    .token-item:hover::before { background: var(--accent); }
+
+    .token-index {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--border-active);
+      min-width: 1.8rem;
+      user-select: none;
+    }
+
+    .token-value {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .token-copy-hint {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      opacity: 0;
+      transition: opacity 0.12s;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .token-item:hover .token-copy-hint { opacity: 1; }
+
+    .token-item.flash {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 1rem;
+      color: var(--muted);
+    }
+
+    .empty-state .big-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    .empty-state p {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    footer p {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--accent);
+      color: #0d0d0d;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 0.6rem 1rem;
+      letter-spacing: 0.06em;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 700px) {
+      main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="7" width="16" height="4" fill="#0d0d0d"/>
+      <rect x="5" y="1" width="4" height="16" fill="#0d0d0d"/>
+    </svg>
+  </div>
+  <h1>Token Generator</h1>
+  <span class="version">v1.0.0</span>
+</header>
+
+<main>
+  <aside class="panel">
+
+    <div class="panel-section">
+      <h2>Token Type</h2>
+      <div class="toggle-grid">
+        <button class="toggle-btn active" data-type="hex">hex</button>
+        <button class="toggle-btn" data-type="base64">base64</button>
+        <button class="toggle-btn" data-type="base62">base62</button>
+        <button class="toggle-btn" data-type="uuid">uuid v4</button>
+        <button class="toggle-btn" data-type="numeric">numeric</button>
+        <button class="toggle-btn" data-type="alphanumeric">alphanum</button>
+      </div>
+    </div>
+
+    <div class="panel-section" id="length-section">
+      <h2>Length</h2>
+      <div class="range-row">
+        <input type="range" id="length" min="8" max="128" value="32" step="1" />
+        <span class="range-val" id="length-display">32</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h2>Quantity</h2>
+      <div class="range-row">
+        <input type="range" id="quantity" min="1" max="100" value="10" step="1" />
+        <span class="range-val" id="quantity-display">10</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h2>Format</h2>
+      <div class="field">
+        <label>Prefix</label>
+        <input type="text" id="prefix" placeholder="e.g. tok_" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;padding:0.6rem 0.75rem;width:100%;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+      </div>
+      <div class="field">
+        <label>Separator (for grouping)</label>
+        <div class="toggle-grid">
+          <button class="toggle-btn active" data-sep="none">none</button>
+          <button class="toggle-btn" data-sep="-">dash  —</button>
+          <button class="toggle-btn" data-sep="_">underscore</button>
+          <button class="toggle-btn" data-sep=".">dot .</button>
+        </div>
+      </div>
+      <div class="field" id="group-field">
+        <label>Group every <span id="group-label">0</span> chars</label>
+        <div class="range-row">
+          <input type="range" id="group-size" min="0" max="16" value="0" step="1" />
+          <span class="range-val" id="group-display">off</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generate-btn">Generate Tokens</button>
+
+  </aside>
+
+  <section class="output-area">
+    <div class="output-toolbar">
+      <span class="stat">Count: <span id="stat-count">0</span></span>
+      <span class="stat">Type: <span id="stat-type">hex</span></span>
+      <span class="stat">Length: <span id="stat-length">—</span></span>
+      <div class="toolbar-actions">
+        <button class="action-btn" id="copy-all-btn">copy all</button>
+        <button class="action-btn" id="download-btn">download</button>
+      </div>
+    </div>
+    <div class="tokens-container" id="tokens-container">
+      <div class="empty-state" id="empty-state">
+        <div class="big-icon">⬡</div>
+        <p>Configure and click generate<br/>to produce tokens</p>
+      </div>
+      <div class="tokens-grid layout-list" id="tokens-grid" style="display:none;"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Click any token to copy &nbsp;·&nbsp; All generation is client-side</p>
+  <p id="gen-time"></p>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const state = {
+    type: 'hex',
+    length: 32,
+    quantity: 10,
+    prefix: '',
+    separator: 'none',
+    groupSize: 0,
+    tokens: []
+  };
+
+  function getEl(id) { return document.getElementById(id); }
+
+  // Type toggles
+  document.querySelectorAll('[data-type]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.type = btn.dataset.type;
+      const isUuid = state.type === 'uuid';
+      getEl('length-section').style.opacity = isUuid ? '0.4' : '1';
+      getEl('length-section').style.pointerEvents = isUuid ? 'none' : '';
+    });
+  });
+
+  // Sep toggles
+  document.querySelectorAll('[data-sep]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-sep]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.separator = btn.dataset.sep;
+    });
+  });
+
+  // Sliders
+  function bindSlider(id, displayId, key, fmt) {
+    const el = getEl(id);
+    const disp = getEl(displayId);
+    el.addEventListener('input', () => {
+      state[key] = parseInt(el.value);
+      disp.textContent = fmt ? fmt(state[key]) : state[key];
+    });
+  }
+
+  bindSlider('length', 'length-display', 'length');
+  bindSlider('quantity', 'quantity-display', 'quantity');
+  bindSlider('group-size', 'group-display', 'groupSize', v => v === 0 ? 'off' : v);
+
+  getEl('group-size').addEventListener('input', () => {
+    getEl('group-label').textContent = state.groupSize === 0 ? '0' : state.groupSize;
+  });
+
+  getEl('prefix').addEventListener('input', e => { state.prefix = e.target.value; });
+
+  // Token generation
+  const CHARSETS = {
+    hex: '0123456789abcdef',
+    base62: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+    alphanumeric: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+    numeric: '0123456789',
+  };
+
+  function randomBytes(n) {
+    const arr = new Uint8Array(n);
+    crypto.getRandomValues(arr);
+    return arr;
+  }
+
+  function generateFromCharset(charset, length) {
+    const bytes = randomBytes(length);
+    return Array.from(bytes).map(b => charset[b % charset.length]).join('');
+  }
+
+  function generateBase64(length) {
+    const bytes = randomBytes(Math.ceil(length * 3 / 4));
+    const b64 = btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return b64.slice(0, length);
+  }
+
+  function generateUUID() {
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+  }
+
+  function generateToken() {
+    let raw;
+    const len = state.length;
+
+    if (state.type === 'uuid') {
+      raw = generateUUID();
+    } else if (state.type === 'base64') {
+      raw = generateBase64(len);
+    } else {
+      raw = generateFromCharset(CHARSETS[state.type] || CHARSETS.hex, len);
+    }
+
+    let formatted = raw;
+    if (state.separator !== 'none' && state.groupSize > 0 && state.type !== 'uuid') {
+      const sep = state.separator;
+      const gs = state.groupSize;
+      const parts = [];
+      for (let i = 0; i < formatted.length; i += gs) {
+        parts.push(formatted.slice(i, i + gs));
+      }
+      formatted = parts.join(sep);
+    }
+
+    return state.prefix + formatted;
+  }
+
+  function applyLayout(tokens) {
+    const avgLen = tokens[0] ? tokens[0].length : 32;
+    const grid = getEl('tokens-grid');
+    grid.className = 'tokens-grid ' + (avgLen <= 16 ? 'layout-3col' : avgLen <= 32 ? 'layout-2col' : 'layout-list');
+  }
+
+  function renderTokens() {
+    const grid = getEl('tokens-grid');
+    const empty = getEl('empty-state');
+    const tokens = state.tokens;
+
+    if (!tokens.length) {
+      empty.style.display = 'flex';
+      grid.style.display = 'none';
+      return;
+    }
+
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+    applyLayout(tokens);
+
+    grid.innerHTML = tokens.map((t, i) => `
+      <div class="token-item" data-token="${escHtml(t)}" onclick="copyToken(this)">
+        <span class="token-index">${String(i + 1).padStart(2, '0')}</span>
+        <span class="token-value">${escHtml(t)}</span>
+        <span class="token-copy-hint">copy</span>
+      </div>
+    `).join('');
+
+    // Update stats
+    getEl('stat-count').textContent = tokens.length;
+    getEl('stat-type').textContent = state.type;
+    getEl('stat-length').textContent = state.type === 'uuid' ? '36 (uuid)' : tokens[0].length + ' chars';
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showToast(msg) {
+    const t = getEl('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  window.copyToken = function(el) {
+    const token = el.dataset.token;
+    navigator.clipboard.writeText(token).then(() => {
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 400);
+      showToast('Copied!');
+    });
+  };
+
+  getEl('generate-btn').addEventListener('click', () => {
+    const t0 = performance.now();
+    state.tokens = Array.from({ length: state.quantity }, generateToken);
+    const ms = (performance.now() - t0).toFixed(1);
+    renderTokens();
+    getEl('gen-time').textContent = `Generated in ${ms}ms`;
+  });
+
+  getEl('copy-all-btn').addEventListener('click', () => {
+    if (!state.tokens.length) return;
+    navigator.clipboard.writeText(state.tokens.join('\n')).then(() => {
+      const btn = getEl('copy-all-btn');
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy all'; btn.classList.remove('copied'); }, 1500);
+    });
+  });
+
+  getEl('download-btn').addEventListener('click', () => {
+    if (!state.tokens.length) return;
+    const blob = new Blob([state.tokens.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tokens-${state.type}-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Downloaded!');
+  });
+</script>
+</body>
+</html>
